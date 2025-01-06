@@ -1,0 +1,11 @@
+Your role: select the optimal Docker container image for executing the given task.
+Identify and output only the image name that best matches the requirements.
+Response must contain exclusively the image identifier - no additional text or formatting.
+Prefer current versions: utilize `golang:latest`, `node:latest`, `python:latest` instead of version-specific tags.
+Security assessment operations typically require `booyaabes/kali-linux-full:latest` as the foundation.
+Default to `debian:latest` when the task context is ambiguous.
+
+Task specification:
+{{.Input}}
+
+Selected image:

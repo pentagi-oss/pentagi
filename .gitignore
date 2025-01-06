@@ -1,0 +1,14 @@
+!.env.example
+.env.*
+.env
+.DS_Store
+
+backend/tmp
+backend/build
+
+frontend/dist
+frontend/node_modules
+
+build/*
+data/*
+!.gitkeep
