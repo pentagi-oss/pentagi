@@ -1,13 +1,53 @@
 # syntax=docker/dockerfile:1.4
 
 # ========================================
-# Stage 1: Backend Services Compilation
+# Stage 1: Frontend Application Build
 # ========================================
-FROM golang:1.23-alpine AS api-builder
+FROM node:23-slim AS frontend-compiler
+
+ENV NODE_ENV=production
+ENV VITE_BUILD_MEMORY_LIMIT=4096
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+WORKDIR /app/ui
+
+# GraphQL schema for code generation
+COPY ./backend/pkg/graph/schema.graphqls ../backend/pkg/graph/
+
+# Frontend source code
+COPY frontend/ .
+
+# Install dependencies with package manager detection for SBOM
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --include=dev
+
+# Build frontend with optimizations and parallel processing
+RUN npm run build -- \
+    --mode production \
+    --minify esbuild \
+    --outDir dist \
+    --emptyOutDir \
+    --sourcemap false \
+    --target es2020
+
+# ========================================
+# Stage 2: Backend Services Compilation
+# ========================================
+FROM golang:1.23-bookworm AS api-builder
 
 # Static binary compilation settings
-ENV CGO_ENABLED=1
-RUN apk add --no-cache gcc musl-dev
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+
+# Install build essentials
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    tzdata \
+    gcc \
+    g++ \
+    make \
+    git \
+    musl-dev
 
 WORKDIR /app/backend
 
@@ -22,7 +62,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN go build -trimpath -o /pentagi ./cmd/pentagi
 
 # ========================================
-# Stage 2: Production Runtime Environment
+# Stage 3: Production Runtime Environment
 # ========================================
 FROM alpine:3.21
 
@@ -48,6 +88,7 @@ RUN mkdir -p \
     /opt/pentagi/data
 
 COPY --from=api-builder /pentagi /opt/pentagi/bin/pentagi
+COPY --from=frontend-compiler /app/ui/dist /opt/pentagi/fe
 
 COPY LICENSE /opt/pentagi/LICENSE
 COPY NOTICE /opt/pentagi/NOTICE

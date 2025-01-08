@@ -24,5 +24,26 @@
             "cwd": "${workspaceFolder}",
             "output": "${workspaceFolder}/build/__debug_bin",
         },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Frontend",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "env": {
+                "VITE_API_URL": "localhost:8080",
+                "VITE_USE_HTTPS": "false",
+                "VITE_PORT": "8000",
+                "VITE_HOST": "0.0.0.0",
+            },
+            "cwd": "${workspaceFolder}/frontend",
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Browser",
+            "url": "http://localhost:8000",
+            "webRoot": "${workspaceFolder}/frontend/src"
+        },
     ]
 }

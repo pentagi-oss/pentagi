@@ -6,14 +6,14 @@
 
 ## 📖 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Advanced Setup](#advanced-setup)
-- [Development](#development)
-- [Building](#building)
-- [Credits](#credits)
-- [License](#license)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Advanced Setup](#-advanced-setup)
+- [Development](#-development)
+- [Building](#%EF%B8%8F-building)
+- [Credits](#-credits)
+- [License](#-license)
 
 ## 🎯 Overview
 
@@ -55,15 +55,15 @@ flowchart TB
     pentagi["✨ PentAGI
     (Autonomous penetration testing system)"]
     
-    target["🎯 Target System
+    target["🎯 target-system
     (System under test)"]
-    llm["🧠 LLM Provider
+    llm["🧠 llm-provider
     (OpenAI/Anthropic/Custom)"]
-    search["🔍 Search Systems
+    search["🔍 search-systems
     (Google/Tavily/Traversaal)"]
-    langfuse["📊 Langfuse UI
+    langfuse["📊 langfuse-ui
     (LLM Observability Dashboard)"]
-    grafana["📈 Grafana
+    grafana["📈 grafana
     (System Monitoring Dashboard)"]
     
     pentester --> |Uses HTTPS| pentagi
@@ -547,6 +547,7 @@ For using Google OAuth you need to create a new OAuth application in your Google
 - nodejs
 - docker
 - postgres
+- commitlint
 
 ### Environment Setup
 
@@ -596,6 +597,26 @@ npm install -g fern-api
 
 For running tests `cd backend && go test -v ./...`
 
+#### Frontend Setup
+
+Run once `cd frontend && npm install` to install needed packages.
+
+For generating graphql files have to run `npm run graphql:generate` which using `graphql-codegen.ts` file.
+
+Be sure that you have `graphql-codegen` installed globally:
+
+```bash
+npm install -g graphql-codegen
+```
+
+After that you can run:
+* `npm run prettier` to check if your code is formatted correctly
+* `npm run prettier:fix` to fix it
+* `npm run lint` to check if your code is linted correctly
+* `npm run lint:fix` to fix it
+
+For generating SSL certificates you need to run `npm run ssl:generate` which using `generate-ssl.ts` file or it will be generated automatically when you run `npm run dev`.
+
 #### Backend Configuration
 
 Edit the configuration for `backend` in `.vscode/launch.json` file:
@@ -605,6 +626,14 @@ Edit the configuration for `backend` in `.vscode/launch.json` file:
 Optional:
 - `SERVER_PORT` - Port to run the server (default: `8443`)
 - `SERVER_USE_SSL` - Enable SSL for the server (default: `false`)
+
+#### Frontend Configuration
+
+Edit the configuration for `frontend` in `.vscode/launch.json` file:
+- `VITE_API_URL` - Backend API URL. *Omit* the URL scheme (e.g., `localhost:8080` *NOT* `http://localhost:8080`)
+- `VITE_USE_HTTPS` - Enable SSL for the server (default: `false`)
+- `VITE_PORT` - Port to run the server (default: `8000`)
+- `VITE_HOST` - Host to run the server (default: `0.0.0.0`)
 
 ### Running the Application
 
@@ -616,6 +645,15 @@ Run the command(s) in `backend` folder:
 
 > [!NOTE]
 > The first run can take a while as dependencies and docker images need to be downloaded to setup the backend environment.
+
+#### Frontend
+
+Run the command(s) in `frontend` folder:
+- Run `npm install` to install the dependencies
+- Run `npm run dev` to run the web app
+- Run `npm run build` to build the web app
+
+Navigate to the displayed development server address in your web browser.
 
 ## 🏗️ Building
 
