@@ -11,6 +11,15 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app/ui
 
+# Install build essentials
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    tzdata \
+    gcc \
+    g++ \
+    make \
+    git
+
 # GraphQL schema for code generation
 COPY ./backend/pkg/graph/schema.graphqls ../backend/pkg/graph/
 
