@@ -70,6 +70,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Compile main application binary with embedded version metadata
 RUN go build -trimpath -o /pentagi ./cmd/pentagi
 
+# Build ctester utility
+RUN go build -trimpath -o /ctester ./cmd/ctester
+
 # ========================================
 # Stage 3: Production Runtime Environment
 # ========================================
@@ -94,10 +97,16 @@ RUN mkdir -p \
     /opt/pentagi/ssl \
     /opt/pentagi/fe \
     /opt/pentagi/logs \
-    /opt/pentagi/data
+    /opt/pentagi/data \
+    /opt/pentagi/conf
 
 COPY --from=api-builder /pentagi /opt/pentagi/bin/pentagi
+COPY --from=api-builder /ctester /opt/pentagi/bin/ctester
 COPY --from=frontend-compiler /app/ui/dist /opt/pentagi/fe
+
+# Copy provider configuration files
+COPY examples/configs/openrouter.provider.yml /opt/pentagi/conf/
+COPY examples/configs/deepinfra.provider.yml /opt/pentagi/conf/
 
 COPY LICENSE /opt/pentagi/LICENSE
 COPY NOTICE /opt/pentagi/NOTICE
