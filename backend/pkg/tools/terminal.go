@@ -22,10 +22,10 @@ const (
 	defaultExecCommandTimeout = 5 * time.Minute
 	defaultExtraExecTimeout   = 5 * time.Second
 
-	ansiColorInputCmd    = "\033[96m"
-	ansiColorSystemMsg   = "\033[92m"
-	ansiColorReset       = "\033[0m"
-	ansiLineTerminator   = "\r\n"
+	ansiColorInputCmd  = "\033[96m"
+	ansiColorSystemMsg = "\033[92m"
+	ansiColorReset     = "\033[0m"
+	ansiLineTerminator = "\r\n"
 )
 
 type terminal struct {
@@ -34,6 +34,18 @@ type terminal struct {
 	containerLID string
 	dockerClient docker.DockerClient
 	tlp          TermLogProvider
+}
+
+func NewTerminalTool(flowID int64, containerID int64, containerLID string,
+	dockerClient docker.DockerClient, tlp TermLogProvider,
+) Tool {
+	return &terminal{
+		flowID:       flowID,
+		containerID:  containerID,
+		containerLID: containerLID,
+		dockerClient: dockerClient,
+		tlp:          tlp,
+	}
 }
 
 func (t *terminal) wrapCommandResult(ctx context.Context, name, result string, err error) (string, error) {
@@ -320,4 +332,8 @@ func (t *terminal) WriteFile(ctx context.Context, flowID int64, content string, 
 
 func PrimaryTerminalName(flowID int64) string {
 	return fmt.Sprintf("pentagi-terminal-%d", flowID)
+}
+
+func (t *terminal) IsAvailable() bool {
+	return t.dockerClient != nil
 }

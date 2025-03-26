@@ -32,6 +32,16 @@ type browser struct {
 	scp      ScreenshotProvider
 }
 
+func NewBrowserTool(flowID int64, dataDir, scPrvURL, scPubURL string, scp ScreenshotProvider) Tool {
+	return &browser{
+		flowID:   flowID,
+		dataDir:  dataDir,
+		scPrvURL: scPrvURL,
+		scPubURL: scPubURL,
+		scp:      scp,
+	}
+}
+
 func (b *browser) wrapCommandResult(ctx context.Context, name, result, url, screen string, err error) (string, error) {
 	if err != nil {
 		logrus.WithContext(ctx).WithError(err).WithFields(logrus.Fields{
@@ -357,6 +367,6 @@ func (b *browser) callScraper(url string) ([]byte, error) {
 	return content, nil
 }
 
-func (b *browser) isAvailable() bool {
+func (b *browser) IsAvailable() bool {
 	return b.scPrvURL != "" || b.scPubURL != ""
 }

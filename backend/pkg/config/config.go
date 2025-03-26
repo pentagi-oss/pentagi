@@ -78,6 +78,11 @@ type Config struct {
 	// === Search Engine: Tavily ===
 	TavilyAPIKey string `env:"TAVILY_API_KEY"`
 
+	// === Search Engine: Perplexity AI ===
+	PerplexityAPIKey      string `env:"PERPLEXITY_API_KEY"`
+	PerplexityModel       string `env:"PERPLEXITY_MODEL" envDefault:"sonar"`
+	PerplexityContextSize string `env:"PERPLEXITY_CONTEXT_SIZE" envDefault:"low"`
+
 	// === Network Proxy Configuration ===
 	ProxyURL string `env:"PROXY_URL"`
 
