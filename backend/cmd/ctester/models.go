@@ -47,10 +47,10 @@ type FunctionCallTest struct {
 
 // TestFileAction represents a structure for testing file operations
 type TestFileAction struct {
-	Action  tools.CodeAction `json:"action"`
-	Path    string           `json:"path"`
-	Content string           `json:"content"`
-	Message string           `json:"message"`
+	Action  tools.FileOp `json:"action"`
+	Path    string       `json:"path"`
+	Content string       `json:"content"`
+	Message string       `json:"message"`
 }
 
 // TestSearchAction represents a structure for testing search operations

@@ -73,6 +73,9 @@ RUN go build -trimpath -o /pentagi ./cmd/pentagi
 # Build ctester utility
 RUN go build -trimpath -o /ctester ./cmd/ctester
 
+# Build ftester utility
+RUN go build -trimpath -o /ftester ./cmd/ftester
+
 # ========================================
 # Stage 3: Production Runtime Environment
 # ========================================
@@ -102,6 +105,7 @@ RUN mkdir -p \
 
 COPY --from=api-builder /pentagi /opt/pentagi/bin/pentagi
 COPY --from=api-builder /ctester /opt/pentagi/bin/ctester
+COPY --from=api-builder /ftester /opt/pentagi/bin/ftester
 COPY --from=frontend-compiler /app/ui/dist /opt/pentagi/fe
 
 # Copy provider configuration files
