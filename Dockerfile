@@ -42,7 +42,7 @@ RUN npm run build -- \
 # ========================================
 # Stage 2: Backend Services Compilation
 # ========================================
-FROM golang:1.23-bookworm AS api-builder
+FROM golang:1.24-bookworm AS api-builder
 
 # Static binary compilation settings
 ENV CGO_ENABLED=0

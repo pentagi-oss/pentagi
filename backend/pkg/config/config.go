@@ -58,11 +58,22 @@ type Config struct {
 	EmbeddingBatchSize     int    `env:"EMBEDDING_BATCH_SIZE" envDefault:"512"`
 	EmbeddingProvider      string `env:"EMBEDDING_PROVIDER" envDefault:"openai"`
 
+	// === Chain Summarization Engine ===
+	SummarizerPreserveLast   bool `env:"SUMMARIZER_PRESERVE_LAST" envDefault:"true"`
+	SummarizerUseQA          bool `env:"SUMMARIZER_USE_QA" envDefault:"true"`
+	SummarizerSumHumanInQA   bool `env:"SUMMARIZER_SUM_MSG_HUMAN_IN_QA" envDefault:"false"`
+	SummarizerLastSecBytes   int  `env:"SUMMARIZER_LAST_SEC_BYTES" envDefault:"51200"`
+	SummarizerMaxBPBytes     int  `env:"SUMMARIZER_MAX_BP_BYTES" envDefault:"16384"`
+	SummarizerMaxQASections  int  `env:"SUMMARIZER_MAX_QA_SECTIONS" envDefault:"10"`
+	SummarizerMaxQABytes     int  `env:"SUMMARIZER_MAX_QA_BYTES" envDefault:"65536"`
+	SummarizerKeepQASections int  `env:"SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"1"`
+
 	// === LLM Provider: Custom/Generic ===
-	LLMServerURL    string `env:"LLM_SERVER_URL"`
-	LLMServerKey    string `env:"LLM_SERVER_KEY"`
-	LLMServerModel  string `env:"LLM_SERVER_MODEL"`
-	LLMServerConfig string `env:"LLM_SERVER_CONFIG_PATH"`
+	LLMServerURL             string `env:"LLM_SERVER_URL"`
+	LLMServerKey             string `env:"LLM_SERVER_KEY"`
+	LLMServerModel           string `env:"LLM_SERVER_MODEL"`
+	LLMServerConfig          string `env:"LLM_SERVER_CONFIG_PATH"`
+	LLMServerLegacyReasoning bool   `env:"LLM_SERVER_LEGACY_REASONING" envDefault:"false"`
 
 	// === Search Engine: Google Custom Search ===
 	GoogleAPIKey string `env:"GOOGLE_API_KEY"`
@@ -90,6 +101,15 @@ type Config struct {
 	PerplexityAPIKey      string `env:"PERPLEXITY_API_KEY"`
 	PerplexityModel       string `env:"PERPLEXITY_MODEL" envDefault:"sonar"`
 	PerplexityContextSize string `env:"PERPLEXITY_CONTEXT_SIZE" envDefault:"low"`
+
+	// === AI Assistant Mode Configuration ===
+	AssistantUseAgents                bool `env:"ASSISTANT_USE_AGENTS" envDefault:"false"`
+	AssistantSummarizerPreserveLast   bool `env:"ASSISTANT_SUMMARIZER_PRESERVE_LAST" envDefault:"true"`
+	AssistantSummarizerLastSecBytes   int  `env:"ASSISTANT_SUMMARIZER_LAST_SEC_BYTES" envDefault:"76800"`
+	AssistantSummarizerMaxBPBytes     int  `env:"ASSISTANT_SUMMARIZER_MAX_BP_BYTES" envDefault:"16384"`
+	AssistantSummarizerMaxQASections  int  `env:"ASSISTANT_SUMMARIZER_MAX_QA_SECTIONS" envDefault:"7"`
+	AssistantSummarizerMaxQABytes     int  `env:"ASSISTANT_SUMMARIZER_MAX_QA_BYTES" envDefault:"76800"`
+	AssistantSummarizerKeepQASections int  `env:"ASSISTANT_SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"3"`
 
 	// === Network Proxy Configuration ===
 	ProxyURL string `env:"PROXY_URL"`

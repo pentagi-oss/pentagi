@@ -58,11 +58,11 @@ type DockerClient interface {
 	HaltContainer(ctx context.Context, containerID string, dbID int64) error
 	PurgeContainer(ctx context.Context, containerID string, dbID int64) error
 	VerifyContainerRuntime(ctx context.Context, containerID string) (bool, error)
-	ContainerExecCreate(ctx context.Context, container string, config types.ExecConfig) (types.IDResponse, error)
-	ContainerExecAttach(ctx context.Context, execID string, config types.ExecStartCheck) (types.HijackedResponse, error)
-	ContainerExecInspect(ctx context.Context, execID string) (types.ContainerExecInspect, error)
-	CopyToContainer(ctx context.Context, containerID string, dstPath string, content io.Reader, options types.CopyToContainerOptions) error
-	CopyFromContainer(ctx context.Context, containerID string, srcPath string) (io.ReadCloser, types.ContainerPathStat, error)
+	ContainerExecCreate(ctx context.Context, container string, config container.ExecOptions) (container.ExecCreateResponse, error)
+	ContainerExecAttach(ctx context.Context, execID string, config container.ExecAttachOptions) (types.HijackedResponse, error)
+	ContainerExecInspect(ctx context.Context, execID string) (container.ExecInspect, error)
+	CopyToContainer(ctx context.Context, containerID string, dstPath string, content io.Reader, options container.CopyToContainerOptions) error
+	CopyFromContainer(ctx context.Context, containerID string, srcPath string) (io.ReadCloser, container.PathStat, error)
 	CleanupAllResources(ctx context.Context) error
 	GetDefaultImage() string
 }
@@ -517,15 +517,15 @@ func (dc *dockerClient) GetDefaultImage() string {
 func (dc *dockerClient) ContainerExecCreate(
 	ctx context.Context,
 	container string,
-	config types.ExecConfig,
-) (types.IDResponse, error) {
+	config container.ExecOptions,
+) (container.ExecCreateResponse, error) {
 	return dc.client.ContainerExecCreate(ctx, container, config)
 }
 
 func (dc *dockerClient) ContainerExecAttach(
 	ctx context.Context,
 	execID string,
-	config types.ExecStartCheck,
+	config container.ExecAttachOptions,
 ) (types.HijackedResponse, error) {
 	return dc.client.ContainerExecAttach(ctx, execID, config)
 }
@@ -533,7 +533,7 @@ func (dc *dockerClient) ContainerExecAttach(
 func (dc *dockerClient) ContainerExecInspect(
 	ctx context.Context,
 	execID string,
-) (types.ContainerExecInspect, error) {
+) (container.ExecInspect, error) {
 	return dc.client.ContainerExecInspect(ctx, execID)
 }
 
@@ -542,7 +542,7 @@ func (dc *dockerClient) CopyToContainer(
 	containerID string,
 	dstPath string,
 	content io.Reader,
-	options types.CopyToContainerOptions,
+	options container.CopyToContainerOptions,
 ) error {
 	return dc.client.CopyToContainer(ctx, containerID, dstPath, content, options)
 }
@@ -551,7 +551,7 @@ func (dc *dockerClient) CopyFromContainer(
 	ctx context.Context,
 	containerID string,
 	srcPath string,
-) (io.ReadCloser, types.ContainerPathStat, error) {
+) (io.ReadCloser, container.PathStat, error) {
 	return dc.client.CopyFromContainer(ctx, containerID, srcPath)
 }
 
