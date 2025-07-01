@@ -116,6 +116,7 @@ COPY --from=frontend-compiler /app/ui/dist /opt/pentagi/fe
 COPY examples/configs/openrouter.provider.yml /opt/pentagi/conf/
 COPY examples/configs/deepinfra.provider.yml /opt/pentagi/conf/
 COPY examples/configs/deepseek.provider.yml /opt/pentagi/conf/
+COPY examples/configs/custom-openai.provider.yml /opt/pentagi/conf/
 
 COPY LICENSE /opt/pentagi/LICENSE
 COPY NOTICE /opt/pentagi/NOTICE
