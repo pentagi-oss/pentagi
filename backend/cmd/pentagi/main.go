@@ -91,7 +91,7 @@ func main() {
 		log.Fatalf("Docker runtime client initialization failed: %v", err)
 	}
 
-	providers, err := providers.NewProviderController(cfg, client)
+	providers, err := providers.NewProviderController(cfg, queries, client)
 	if err != nil {
 		log.Fatalf("LLM provider controller initialization failed: %v", err)
 	}

@@ -49,3 +49,15 @@ models:
   Uint:
     model:
       - github.com/99designs/gqlgen/graphql.Uint
+  JSON:
+    model:
+      - encoding/json.RawMessage
+  # Input types for avoiding types duplication
+  ReasoningConfigInput:
+    model: pentagi/pkg/graph/model.ReasoningConfig
+  ModelPriceInput:
+    model: pentagi/pkg/graph/model.ModelPrice
+  AgentConfigInput:
+    model: pentagi/pkg/graph/model.AgentConfig
+  AgentsConfigInput:
+    model: pentagi/pkg/graph/model.AgentsConfig
