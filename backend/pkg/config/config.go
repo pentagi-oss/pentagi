@@ -41,8 +41,8 @@ type Config struct {
 	CookieSigningSalt string `env:"COOKIE_SIGNING_SALT"`
 
 	// === Browser Automation Service Configuration ===
-	ScraperPublicURL  string `env:"SCRAPER_PUBLIC_URL" envDefault:"https://someuser:somepass@scraper"`
-	ScraperPrivateURL string `env:"SCRAPER_PRIVATE_URL" envDefault:"https://someuser:somepass@scraper"`
+	ScraperPublicURL  string `env:"SCRAPER_PUBLIC_URL"`
+	ScraperPrivateURL string `env:"SCRAPER_PRIVATE_URL"`
 
 	// === LLM Provider: OpenAI ===
 	OpenAIKey       string `env:"OPEN_AI_KEY"`
