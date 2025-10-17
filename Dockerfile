@@ -82,7 +82,7 @@ RUN go build -trimpath -o /etester ./cmd/etester
 # ========================================
 # Stage 3: Production Runtime Environment
 # ========================================
-FROM alpine:3.21
+FROM alpine:3.22.1
 
 # Create non-root user and docker group with specific GID
 RUN addgroup -g 998 docker && \
