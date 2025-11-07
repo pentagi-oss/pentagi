@@ -264,7 +264,8 @@ func (t *terminal) ReadFile(ctx context.Context, flowID int64, path string) (str
 	}
 
 	cwd := docker.WorkFolderPathInContainer
-	catCommand := fmt.Sprintf("cat %s", path)
+	escapedPath := strings.ReplaceAll(path, "'", "'\"'\"'")
+	catCommand := fmt.Sprintf("cat '%s'", escapedPath)
 	styledCommand := fmt.Sprintf("%s $ %s%s%s%s", cwd, ansiColorInputCmd, catCommand, ansiColorReset, ansiLineTerminator)
 	_, err = t.tlp.PutMsg(ctx, database.TermlogTypeStdin, styledCommand, t.containerID, t.taskID, t.subtaskID)
 	if err != nil {
@@ -301,7 +302,13 @@ func (t *terminal) ReadFile(ctx context.Context, flowID int64, path string) (str
 			)
 		}
 
-		var fileContent = make([]byte, tarHeader.Size)
+		const maxFileSize = 100 * 1024 * 1024 // 100 MB limit
+		fileSize := tarHeader.Size
+		if fileSize < 0 || fileSize > maxFileSize {
+			return "", fmt.Errorf("file size %d bytes exceeds maximum allowed size of %d bytes", fileSize, maxFileSize)
+		}
+
+		var fileContent = make([]byte, fileSize)
 		_, err = tarReader.Read(fileContent)
 		if err != nil && err != io.EOF {
 			return "", fmt.Errorf("failed to read file '%s' content: %w", tarHeader.Name, err)
@@ -336,6 +343,7 @@ func (t *terminal) WriteFile(ctx context.Context, flowID int64, content string, 
 
 	tarBuffer := &bytes.Buffer{}
 	archiveWriter := tar.NewWriter(tarBuffer)
+	defer archiveWriter.Close()
 	filename := filepath.Base(path)
 	fileDescriptor := &tar.Header{
 		Name: filename,
@@ -350,6 +358,11 @@ func (t *terminal) WriteFile(ctx context.Context, flowID int64, content string, 
 	_, err = archiveWriter.Write([]byte(content))
 	if err != nil {
 		return "", fmt.Errorf("tar archive content serialization failed: %w", err)
+	}
+
+	err = archiveWriter.Close()
+	if err != nil {
+		return "", fmt.Errorf("failed to close tar writer: %w", err)
 	}
 
 	dir := filepath.Dir(path)
