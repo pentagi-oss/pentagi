@@ -21,12 +21,18 @@ import (
 const (
 	defaultExecCommandTimeout = 5 * time.Minute
 	defaultExtraExecTimeout   = 5 * time.Second
+	defaultQuickCheckTimeout  = 500 * time.Millisecond
 
 	ansiColorInputCmd  = "\033[96m"
 	ansiColorSystemMsg = "\033[92m"
 	ansiColorReset     = "\033[0m"
 	ansiLineTerminator = "\r\n"
 )
+
+type execResult struct {
+	output string
+	err    error
+}
 
 type terminal struct {
 	flowID       int64
@@ -153,10 +159,25 @@ func (t *terminal) ExecCommand(
 	}
 
 	if detach {
+		resultChan := make(chan execResult, 1)
+
 		go func() {
-			_, _ = t.getExecResult(ctx, createResp.ID, timeout)
+			output, err := t.getExecResult(ctx, createResp.ID, timeout)
+			resultChan <- execResult{output: output, err: err}
 		}()
-		return "Command executed successfully in the background mode", nil
+
+		select {
+		case result := <-resultChan:
+			if result.err != nil {
+				return "", fmt.Errorf("command failed: %w: %s", result.err, result.output)
+			}
+			if result.output == "" {
+				return "Command completed in background with exit code 0", nil
+			}
+			return result.output, nil
+		case <-time.After(defaultQuickCheckTimeout):
+			return fmt.Sprintf("Command started in background with timeout %s (still running)", timeout), nil
+		}
 	}
 
 	return t.getExecResult(ctx, createResp.ID, timeout)
@@ -206,7 +227,7 @@ func (t *terminal) getExecResult(ctx context.Context, id string, timeout time.Du
 	}
 
 	if results == "" {
-		results = "Process terminated with status 0"
+		results = "Command completed successfully with exit code 0. No output produced (silent success)"
 	}
 
 	return results, nil
