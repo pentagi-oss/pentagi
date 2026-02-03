@@ -79,11 +79,13 @@ type Config struct {
 	SummarizerKeepQASections int  `env:"SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"1"`
 
 	// === LLM Provider: Custom/Generic ===
-	LLMServerURL             string `env:"LLM_SERVER_URL"`
-	LLMServerKey             string `env:"LLM_SERVER_KEY"`
-	LLMServerModel           string `env:"LLM_SERVER_MODEL"`
-	LLMServerConfig          string `env:"LLM_SERVER_CONFIG_PATH"`
-	LLMServerLegacyReasoning bool   `env:"LLM_SERVER_LEGACY_REASONING" envDefault:"false"`
+	LLMServerURL               string `env:"LLM_SERVER_URL"`
+	LLMServerKey               string `env:"LLM_SERVER_KEY"`
+	LLMServerModel             string `env:"LLM_SERVER_MODEL"`
+	LLMServerProvider          string `env:"LLM_SERVER_PROVIDER"`
+	LLMServerConfig            string `env:"LLM_SERVER_CONFIG_PATH"`
+	LLMServerLegacyReasoning   bool   `env:"LLM_SERVER_LEGACY_REASONING" envDefault:"false"`
+	LLMServerPreserveReasoning bool   `env:"LLM_SERVER_PRESERVE_REASONING" envDefault:"false"`
 
 	// === LLM Provider: Ollama (Local/Remote) ===
 	OllamaServerURL               string `env:"OLLAMA_SERVER_URL"`
