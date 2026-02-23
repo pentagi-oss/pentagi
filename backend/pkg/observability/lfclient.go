@@ -3,8 +3,10 @@ package observability
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"pentagi/pkg/config"
@@ -63,13 +65,26 @@ func NewLangfuseClient(ctx context.Context, cfg *config.Config) (LangfuseClient,
 		return nil, fmt.Errorf("langfuse base url is not set: %w", ErrNotConfigured)
 	}
 
+	tlsCfg := &tls.Config{InsecureSkipVerify: cfg.ExternalSSLInsecure}
+	if cfg.ExternalSSLCAPath != "" {
+		caPEM, err := os.ReadFile(cfg.ExternalSSLCAPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA certificate from '%s': %w", cfg.ExternalSSLCAPath, err)
+		}
+		caPool := x509.NewCertPool()
+		if !caPool.AppendCertsFromPEM(caPEM) {
+			return nil, fmt.Errorf("failed to parse CA certificate from '%s'", cfg.ExternalSSLCAPath)
+		}
+		tlsCfg.RootCAs = caPool
+	}
+
 	httpClient := &http.Client{
 		Timeout: DefaultObservationTimeout,
 		Transport: &http.Transport{
 			MaxIdleConns:        10,
 			IdleConnTimeout:     30 * time.Second,
 			TLSHandshakeTimeout: 10 * time.Second,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig:     tlsCfg,
 		},
 	}
 
