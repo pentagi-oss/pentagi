@@ -685,9 +685,6 @@ PUBLIC_URL=https://192.168.1.100:8443
 # CORS origins - list all URLs that will access PentAGI
 # Include localhost for local access AND your server IP for external access
 CORS_ORIGINS=https://localhost:8443,https://192.168.1.100:8443
-
-# Docker networking
-DOCKER_PUBLIC_IP=192.168.1.100
 ```
 
 > [!IMPORTANT]
@@ -738,40 +735,6 @@ sudo firewall-cmd --reload
 
 > [!NOTE]
 > You'll need to accept the self-signed SSL certificate warning in your browser when accessing via IP address.
-
-#### Troubleshooting External Access
-
-If you still can't connect externally:
-
-1. **Check Docker binding:**
-   ```bash
-   docker ps | grep pentagi
-   ```
-   Must show `0.0.0.0:8443` not `127.0.0.1:8443`
-
-2. **Check firewall:**
-   ```bash
-   sudo ufw status | grep 8443
-   # or
-   sudo firewall-cmd --list-ports | grep 8443
-   ```
-
-3. **Test connectivity:**
-   ```bash
-   # From server
-   curl -k https://localhost:8443
-   curl -k https://your-server-ip:8443
-
-   # From another machine on the network
-   curl -k https://server-ip:8443
-   ```
-
-4. **Check container logs:**
-   ```bash
-   docker logs pentagi
-   ```
-
-For more details on network configuration and reverse proxy setup, see the [Advanced Setup](#-advanced-setup) section.
 
 ### Assistant Configuration
 
