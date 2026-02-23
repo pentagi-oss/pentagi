@@ -315,3 +315,12 @@ type GraphitiSearchAction struct {
 	RecencyWindow  string   `json:"recency_window,omitempty" jsonschema:"enum=1h,enum=6h,enum=24h,enum=7d" jsonschema_description:"How far back to search (default: 24h, for recent_context)"`
 	Message        string   `json:"message" jsonschema:"required,title=Search message" jsonschema_description:"Not so long message with the summary of the search query and expected results to send to the user in user's language only"`
 }
+
+// SploitusAction is the argument schema for the Sploitus exploit-search tool
+type SploitusAction struct {
+	Query       string `json:"query" jsonschema:"required" jsonschema_description:"Search query for Sploitus (e.g. 'ssh', 'apache 2.4', 'CVE-2021-44228'). Short and precise queries return the best results."`
+	ExploitType string `json:"exploit_type,omitempty" jsonschema:"enum=exploits,enum=tools" jsonschema_description:"What to search for: 'exploits' (default) for exploit code and PoCs, 'tools' for offensive security tools"`
+	Sort        string `json:"sort,omitempty" jsonschema:"enum=default,enum=date,enum=score" jsonschema_description:"Result ordering: 'default' (relevance), 'date' (newest first), 'score' (highest CVSS first)"`
+	MaxResults  Int64  `json:"max_results" jsonschema:"required,type=integer" jsonschema_description:"Maximum number of results to return (minimum 1; maximum 25; default 10)"`
+	Message     string `json:"message" jsonschema:"required,title=Search query message" jsonschema_description:"Not so long message with the expected result and path to reach goal to send to the user in user's language only"`
+}

@@ -109,6 +109,9 @@ type Config struct {
 	// === Search Engine: DuckDuckGo ===
 	DuckDuckGoEnabled bool `env:"DUCKDUCKGO_ENABLED" envDefault:"true"`
 
+	// Sploitus exploit aggregator (https://sploitus.com)
+	SploitusEnabled bool `env:"SPLOITUS_ENABLED" envDefault:"true"`
+
 	// === Search Engine: Google Custom Search ===
 	GoogleAPIKey string `env:"GOOGLE_API_KEY"`
 	GoogleCXKey  string `env:"GOOGLE_CX_KEY"`
