@@ -69,12 +69,9 @@ type ScreenshotProvider interface {
 type AgentLogProvider interface {
 	PutLog(
 		ctx context.Context,
-		initiator database.MsgchainType,
-		executor database.MsgchainType,
-		task string,
-		result string,
-		taskID *int64,
-		subtaskID *int64,
+		initiator, executor database.MsgchainType,
+		task, result string,
+		taskID, subtaskID *int64,
 	) (int64, error)
 }
 

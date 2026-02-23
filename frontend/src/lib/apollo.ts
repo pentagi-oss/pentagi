@@ -151,6 +151,7 @@ const subscriptionToCacheFieldMap: Record<string, string> = {
     providerUpdated: 'settingsProviders',
     screenshotAdded: 'screenshots',
     searchLogAdded: 'searchLogs',
+    settingsUserUpdated: 'settingsUser',
     taskCreated: 'tasks',
     taskUpdated: 'tasks',
     terminalLogAdded: 'terminalLogs',
@@ -220,6 +221,27 @@ const processSubscriptionUpdate = (
         return;
     }
 
+    // Special handling for settingsUser - it's a singleton object, not an array
+    if (subscriptionName === 'settingsUserUpdated') {
+        try {
+            cache.modify({
+                fields: {
+                    [cacheField]: () => newItem,
+                },
+            });
+        } catch (error) {
+            Log.error(`Error updating cache for ${subscriptionName}:`, {
+                cacheField,
+                error,
+                itemId: newItem.id,
+                subscriptionName,
+            });
+        }
+
+        return;
+    }
+
+    // For all other subscriptions (array-based cache fields)
     try {
         cache.modify({
             fields: {
@@ -410,6 +432,11 @@ const cache = new InMemoryCache({
                         return incoming;
                     },
                 },
+                settingsUser: {
+                    merge(_existing, incoming) {
+                        return incoming;
+                    },
+                },
                 // Tasks - cache by flowId argument
                 tasks: {
                     keyArgs: ['flowId'],
@@ -446,6 +473,9 @@ const cache = new InMemoryCache({
             keyFields: ['id'],
         },
         TerminalLog: {
+            keyFields: ['id'],
+        },
+        UserPreferences: {
             keyFields: ['id'],
         },
         UserPrompt: {

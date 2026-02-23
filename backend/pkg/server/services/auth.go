@@ -806,6 +806,7 @@ func (s *AuthService) Info(c *gin.Context) {
 		privs = slices.DeleteFunc(privs, func(priv string) bool {
 			return strings.HasPrefix(priv, "users.") ||
 				strings.HasPrefix(priv, "roles.") ||
+				strings.HasPrefix(priv, "settings.user.") ||
 				strings.HasPrefix(priv, "settings.tokens.")
 		})
 		resp.Privs = privs

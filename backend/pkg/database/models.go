@@ -1089,6 +1089,14 @@ type User struct {
 	CreatedAt              sql.NullTime   `json:"created_at"`
 }
 
+type UserPreference struct {
+	ID          int64           `json:"id"`
+	UserID      int64           `json:"user_id"`
+	Preferences json.RawMessage `json:"preferences"`
+	CreatedAt   sql.NullTime    `json:"created_at"`
+	UpdatedAt   sql.NullTime    `json:"updated_at"`
+}
+
 type Vecstorelog struct {
 	ID        int64              `json:"id"`
 	Initiator MsgchainType       `json:"initiator"`
