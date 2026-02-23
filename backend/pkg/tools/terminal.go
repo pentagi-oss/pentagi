@@ -309,13 +309,15 @@ func (t *terminal) ReadFile(ctx context.Context, flowID int64, path string) (str
 			)
 		}
 
-		const maxFileSize = 100 * 1024 * 1024 // 100 MB limit
-		fileSize := tarHeader.Size
-		if fileSize < 0 || fileSize > maxFileSize {
-			return "", fmt.Errorf("file size %d bytes exceeds maximum allowed size of %d bytes", fileSize, maxFileSize)
+		const maxReadFileSize int64 = 100 * 1024 * 1024 // 100 MB limit
+		if tarHeader.Size > maxReadFileSize {
+			return "", fmt.Errorf("file '%s' size %d exceeds maximum allowed size %d", tarHeader.Name, tarHeader.Size, maxReadFileSize)
+		}
+		if tarHeader.Size < 0 {
+			return "", fmt.Errorf("file '%s' has invalid size %d", tarHeader.Name, tarHeader.Size)
 		}
 
-		var fileContent = make([]byte, fileSize)
+		var fileContent = make([]byte, tarHeader.Size)
 		_, err = tarReader.Read(fileContent)
 		if err != nil && err != io.EOF {
 			return "", fmt.Errorf("failed to read file '%s' content: %w", tarHeader.Name, err)
