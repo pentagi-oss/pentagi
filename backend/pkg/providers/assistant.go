@@ -308,6 +308,7 @@ func (ap *assistantProvider) getAssistantSystemPrompt(ctx context.Context) (stri
 		"FileToolName":            tools.FileToolName,
 		"GoogleToolName":          tools.GoogleToolName,
 		"DuckDuckGoToolName":      tools.DuckDuckGoToolName,
+		"SploitusToolName":        tools.SploitusToolName,
 		"TavilyToolName":          tools.TavilyToolName,
 		"TraversaalToolName":      tools.TraversaalToolName,
 		"PerplexityToolName":      tools.PerplexityToolName,

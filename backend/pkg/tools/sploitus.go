@@ -18,12 +18,17 @@ import (
 )
 
 const (
-	sploitusAPIURL        = "https://sploitus.com/search"
-	sploitusDefaultSort   = "default"
-	defaultSploitusLimit  = 10
-	maxSploitusLimit      = 25
-	defaultSploitusType   = "exploits"
+	sploitusAPIURL         = "https://sploitus.com/search"
+	sploitusDefaultSort    = "default"
+	defaultSploitusLimit   = 10
+	maxSploitusLimit       = 25
+	defaultSploitusType    = "exploits"
 	sploitusRequestTimeout = 30 * time.Second
+
+	// Hard limits to prevent memory overflow and excessive response sizes
+	maxSourceSize       = 50 * 1024 // 50 KB max per source field
+	maxTotalResultSize  = 80 * 1024 // 80 KB total output limit
+	truncationMsgBuffer = 500       // Reserve space for truncation message
 )
 
 // sploitus represents the Sploitus exploit search tool
@@ -141,46 +146,28 @@ type sploitusRequest struct {
 	Query  string `json:"query"`
 	Type   string `json:"type"`
 	Sort   string `json:"sort"`
+	Title  bool   `json:"title"`
 	Offset int    `json:"offset"`
 }
 
-// sploitusCVSS holds CVSS scoring information for an exploit
-type sploitusCVSS struct {
-	Score  float64 `json:"score"`
-	Vector string  `json:"vector"`
-}
-
 // sploitusExploit represents a single exploit record returned by Sploitus
+// The API returns the same structure for both exploits and tools
 type sploitusExploit struct {
-	ID         string       `json:"id"`
-	Title      string       `json:"title"`
-	Type       string       `json:"type"`
-	Source     string       `json:"source"`
-	URL        string       `json:"url"`
-	Published  string       `json:"published"`
-	Hash       string       `json:"hash"`
-	VHash      string       `json:"vhash"`
-	CVSS       sploitusCVSS `json:"cvss"`
-	References []string     `json:"references"`
-}
-
-// sploitusTool represents a security tool record returned by Sploitus
-type sploitusTool struct {
-	ID        string   `json:"id"`
-	Title     string   `json:"title"`
-	Type      string   `json:"type"`
-	Source    string   `json:"source"`
-	URL       string   `json:"url"`
-	Published string   `json:"published"`
-	Hash      string   `json:"hash"`
-	Tags      []string `json:"tags"`
+	ID        string  `json:"id"`
+	Title     string  `json:"title"`
+	Type      string  `json:"type"`
+	Href      string  `json:"href"`
+	Download  string  `json:"download,omitempty"`  // Only present for tools
+	Score     float64 `json:"score,omitempty"`     // CVSS score, only for exploits
+	Published string  `json:"published,omitempty"` // Publication date, only for exploits
+	Source    string  `json:"source,omitempty"`    // Source code/description, only for exploits
+	Language  string  `json:"language,omitempty"`  // Programming language, only for exploits
 }
 
 // sploitusResponse is the top-level JSON response from the Sploitus API
 type sploitusResponse struct {
-	Exploits []sploitusExploit `json:"exploits"`
-	Tools    []sploitusTool    `json:"tools"`
-	Total    int               `json:"total"`
+	Exploits      []sploitusExploit `json:"exploits"`
+	ExploitsTotal int               `json:"exploits_total"`
 }
 
 // search calls the Sploitus API and returns a formatted markdown result string
@@ -189,6 +176,7 @@ func (s *sploitus) search(ctx context.Context, query, exploitType, sort string, 
 		Query:  query,
 		Type:   exploitType,
 		Sort:   sort,
+		Title:  false, // search only for titles
 		Offset: 0,
 	}
 
@@ -224,6 +212,11 @@ func (s *sploitus) search(ctx context.Context, query, exploitType, sort string, 
 	}
 	defer resp.Body.Close()
 
+	// Sploitus API returns 499 when rate limit is temporarily exceeded
+	if resp.StatusCode == 499 || resp.StatusCode == 422 {
+		return "", fmt.Errorf("Sploitus API rate limit exceeded (HTTP %d), please try again later", resp.StatusCode)
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("Sploitus API returned HTTP %d", resp.StatusCode)
 	}
@@ -240,77 +233,138 @@ func (s *sploitus) search(ctx context.Context, query, exploitType, sort string, 
 func formatSploitusResults(query, exploitType string, limit int, resp sploitusResponse) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("# Sploitus Search Results\n\n"))
+	sb.WriteString("# Sploitus Search Results\n\n")
 	sb.WriteString(fmt.Sprintf("**Query:** `%s`  \n", query))
 	sb.WriteString(fmt.Sprintf("**Type:** %s  \n", exploitType))
-	sb.WriteString(fmt.Sprintf("**Total matches on Sploitus:** %d\n\n", resp.Total))
+	sb.WriteString(fmt.Sprintf("**Total matches on Sploitus:** %d\n\n", resp.ExploitsTotal))
 	sb.WriteString("---\n\n")
+
+	// Ensure limit is positive
+	if limit < 1 {
+		limit = defaultSploitusLimit
+	}
+
+	results := resp.Exploits
+	if len(results) > limit {
+		results = results[:limit]
+	}
+
+	if len(results) == 0 {
+		switch strings.ToLower(exploitType) {
+		case "tools":
+			sb.WriteString("No security tools were found for the given query.\n")
+		default:
+			sb.WriteString("No exploits were found for the given query.\n")
+		}
+		return sb.String()
+	}
+
+	// Track total size to enforce hard limit
+	currentSize := len(sb.String())
+	actualShown := 0
+	truncatedBySize := false
 
 	switch strings.ToLower(exploitType) {
 	case "tools":
-		tools := resp.Tools
-		if len(tools) > limit {
-			tools = tools[:limit]
-		}
-		if len(tools) == 0 {
-			sb.WriteString("No security tools were found for the given query.\n")
-			return sb.String()
-		}
+		sb.WriteString(fmt.Sprintf("## Security Tools (showing up to %d)\n\n", len(results)))
+		currentSize = len(sb.String())
 
-		sb.WriteString(fmt.Sprintf("## Security Tools (%d shown)\n\n", len(tools)))
-		for i, t := range tools {
-			sb.WriteString(fmt.Sprintf("### %d. %s\n\n", i+1, t.Title))
-			if t.URL != "" {
-				sb.WriteString(fmt.Sprintf("**URL:** %s  \n", t.URL))
+		for i, item := range results {
+			// Check if we're approaching the size limit (reserve space for truncation message)
+			if currentSize >= maxTotalResultSize-truncationMsgBuffer {
+				truncatedBySize = true
+				break
 			}
-			if t.Source != "" {
-				sb.WriteString(fmt.Sprintf("**Source:** %s  \n", t.Source))
+
+			var itemBuilder strings.Builder
+			itemBuilder.WriteString(fmt.Sprintf("### %d. %s\n\n", i+1, item.Title))
+			if item.Href != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**URL:** %s  \n", item.Href))
 			}
-			if t.Published != "" {
-				sb.WriteString(fmt.Sprintf("**Published:** %s  \n", t.Published))
+			if item.Download != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**Download:** %s  \n", item.Download))
 			}
-			if len(t.Tags) > 0 {
-				sb.WriteString(fmt.Sprintf("**Tags:** %s  \n", strings.Join(t.Tags, ", ")))
+			if item.Type != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**Source Type:** %s  \n", item.Type))
 			}
-			sb.WriteString("\n---\n\n")
+			if item.ID != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**ID:** %s  \n", item.ID))
+			}
+			itemBuilder.WriteString("\n---\n\n")
+
+			itemContent := itemBuilder.String()
+			// Check if adding this item would exceed limit (with buffer for truncation msg)
+			if currentSize+len(itemContent) > maxTotalResultSize-truncationMsgBuffer {
+				truncatedBySize = true
+				break
+			}
+
+			sb.WriteString(itemContent)
+			currentSize += len(itemContent)
+			actualShown++
 		}
 
 	default: // "exploits" or anything else
-		exploits := resp.Exploits
-		if len(exploits) > limit {
-			exploits = exploits[:limit]
-		}
-		if len(exploits) == 0 {
-			sb.WriteString("No exploits were found for the given query.\n")
-			return sb.String()
-		}
+		sb.WriteString(fmt.Sprintf("## Exploits (showing up to %d)\n\n", len(results)))
+		currentSize = len(sb.String())
 
-		sb.WriteString(fmt.Sprintf("## Exploits (%d shown)\n\n", len(exploits)))
-		for i, e := range exploits {
-			sb.WriteString(fmt.Sprintf("### %d. %s\n\n", i+1, e.Title))
-			if e.URL != "" {
-				sb.WriteString(fmt.Sprintf("**URL:** %s  \n", e.URL))
+		for i, item := range results {
+			// Check if we're approaching the size limit (reserve space for truncation message)
+			if currentSize >= maxTotalResultSize-truncationMsgBuffer {
+				truncatedBySize = true
+				break
 			}
-			if e.Source != "" {
-				sb.WriteString(fmt.Sprintf("**Source:** %s  \n", e.Source))
+
+			var itemBuilder strings.Builder
+			itemBuilder.WriteString(fmt.Sprintf("### %d. %s\n\n", i+1, item.Title))
+			if item.Href != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**URL:** %s  \n", item.Href))
 			}
-			if e.Published != "" {
-				sb.WriteString(fmt.Sprintf("**Published:** %s  \n", e.Published))
+			if item.Score > 0 {
+				itemBuilder.WriteString(fmt.Sprintf("**CVSS Score:** %.1f  \n", item.Score))
 			}
-			if e.Type != "" {
-				sb.WriteString(fmt.Sprintf("**Type:** %s  \n", e.Type))
+			if item.Type != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**Type:** %s  \n", item.Type))
 			}
-			if e.CVSS.Score > 0 {
-				sb.WriteString(fmt.Sprintf("**CVSS Score:** %.1f  \n", e.CVSS.Score))
-				if e.CVSS.Vector != "" {
-					sb.WriteString(fmt.Sprintf("**CVSS Vector:** `%s`  \n", e.CVSS.Vector))
+			if item.Published != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**Published:** %s  \n", item.Published))
+			}
+			if item.ID != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**ID:** %s  \n", item.ID))
+			}
+			if item.Language != "" {
+				itemBuilder.WriteString(fmt.Sprintf("**Language:** %s  \n", item.Language))
+			}
+
+			// Truncate source if it's too large (hard limit: 50 KB)
+			if item.Source != "" {
+				sourcePreview := item.Source
+				if len(sourcePreview) > maxSourceSize {
+					sourcePreview = sourcePreview[:maxSourceSize] + "\n... [source truncated, exceeded 50 KB limit]"
 				}
+				itemBuilder.WriteString(fmt.Sprintf("\n**Source Preview:**\n```\n%s\n```\n", sourcePreview))
 			}
-			if len(e.References) > 0 {
-				sb.WriteString(fmt.Sprintf("**CVE References:** %s  \n", strings.Join(e.References, ", ")))
+			itemBuilder.WriteString("\n---\n\n")
+
+			itemContent := itemBuilder.String()
+			// Check if adding this item would exceed limit (with buffer for truncation msg)
+			if currentSize+len(itemContent) > maxTotalResultSize-truncationMsgBuffer {
+				truncatedBySize = true
+				break
 			}
-			sb.WriteString("\n---\n\n")
+
+			sb.WriteString(itemContent)
+			currentSize += len(itemContent)
+			actualShown++
 		}
+	}
+
+	// Add warning if results were truncated due to size limit
+	if truncatedBySize {
+		sb.WriteString(fmt.Sprintf(
+			"\n\n**⚠️ Note:** Results truncated after %d items due to %d bytes size limit. Total shown: %d of %d available.\n",
+			actualShown, maxTotalResultSize, actualShown, len(results),
+		))
 	}
 
 	return sb.String()

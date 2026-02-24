@@ -27,7 +27,7 @@ const (
 	TraversaalToolName        = "traversaal"
 	PerplexityToolName        = "perplexity"
 	SearxngToolName           = "searxng"
-	SploitusToolName           = "sploitus"
+	SploitusToolName          = "sploitus"
 	SearchToolName            = "search"
 	SearchResultToolName      = "search_result"
 	EnricherResultToolName    = "enricher_result"
@@ -376,8 +376,8 @@ func getMessageType(name string) database.MsglogType {
 	case BrowserToolName:
 		return database.MsglogTypeBrowser
 	case MemoristToolName, SearchToolName, GoogleToolName, DuckDuckGoToolName, TavilyToolName, TraversaalToolName,
-		PerplexityToolName, SearxngToolName, SploitusToolName, SearchGuideToolName, SearchAnswerToolName, SearchCodeToolName, SearchInMemoryToolName,
-		GraphitiSearchToolName:
+		PerplexityToolName, SearxngToolName, SploitusToolName,
+		SearchGuideToolName, SearchAnswerToolName, SearchCodeToolName, SearchInMemoryToolName, GraphitiSearchToolName:
 		return database.MsglogTypeSearch
 	case AdviceToolName:
 		return database.MsglogTypeAdvice

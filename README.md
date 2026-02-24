@@ -44,7 +44,7 @@ You can watch the video **PentAGI overview**:
 - 🧠 Smart Memory System. Long-term storage of research results and successful approaches for future use.
 - 📚 Knowledge Graph Integration. Graphiti-powered knowledge graph using Neo4j for semantic relationship tracking and advanced context understanding.
 - 🔍 Web Intelligence. Built-in browser via [scraper](https://hub.docker.com/r/vxcontrol/scraper) for gathering latest information from web sources.
-- 🔎 External Search Systems. Integration with advanced search APIs including [Tavily](https://tavily.com), [Traversaal](https://traversaal.ai), [Perplexity](https://www.perplexity.ai), [DuckDuckGo](https://duckduckgo.com/), [Google Custom Search](https://programmablesearchengine.google.com/), and [Searxng](https://searxng.org) for comprehensive information gathering.
+- 🔎 External Search Systems. Integration with advanced search APIs including [Tavily](https://tavily.com), [Traversaal](https://traversaal.ai), [Perplexity](https://www.perplexity.ai), [DuckDuckGo](https://duckduckgo.com/), [Google Custom Search](https://programmablesearchengine.google.com/), [Sploitus Search](https://sploitus.com) and [Searxng](https://searxng.org) for comprehensive information gathering.
 - 👥 Team of Specialists. Delegation system with specialized AI agents for research, development, and infrastructure tasks.
 - 📊 Comprehensive Monitoring. Detailed logging and integration with Grafana/Prometheus for real-time system observation.
 - 📝 Detailed Reporting. Generation of thorough vulnerability reports with exploitation guides.
@@ -79,7 +79,7 @@ flowchart TB
     llm["🧠 llm-provider
     (OpenAI/Anthropic/Ollama/Bedrock/Gemini/Custom)"]
     search["🔍 search-systems
-    (Google/DuckDuckGo/Tavily/Traversaal/Perplexity/Searxng)"]
+    (Google/DuckDuckGo/Tavily/Traversaal/Perplexity/Sploitus/Searxng)"]
     langfuse["📊 langfuse-ui
     (LLM Observability Dashboard)"]
     grafana["📈 grafana
@@ -532,7 +532,7 @@ The installer will:
 1. **System Checks**: Verify Docker, network connectivity, and system requirements
 2. **Environment Setup**: Create and configure `.env` file with optimal defaults
 3. **Provider Configuration**: Set up LLM providers (OpenAI, Anthropic, Gemini, Bedrock, Ollama, Custom)
-4. **Search Engines**: Configure DuckDuckGo, Google, Tavily, Traversaal, Perplexity, Searxng
+4. **Search Engines**: Configure DuckDuckGo, Google, Tavily, Traversaal, Perplexity, Sploitus, Searxng
 5. **Security Hardening**: Generate secure credentials and configure SSL certificates
 6. **Deployment**: Start PentAGI with docker-compose
 
@@ -588,6 +588,7 @@ OLLAMA_SERVER_MODEL=your_model_name
 
 # Optional: Additional search capabilities
 DUCKDUCKGO_ENABLED=true
+SPLOITUS_ENABLED=true
 GOOGLE_API_KEY=your_google_key
 GOOGLE_CX_KEY=your_google_cx
 TAVILY_API_KEY=your_tavily_key
@@ -2215,6 +2216,7 @@ go run cmd/ftester/main.go browser
 - **tavily**: Search using Tavily AI search engine
 - **traversaal**: Search using Traversaal AI search engine
 - **perplexity**: Search using Perplexity AI
+- **sploitus**: Search for security exploits, vulnerabilities (CVEs), and pentesting tools
 - **searxng**: Search using Searxng meta search engine (aggregates results from multiple engines)
 
 ### Vector Database Functions

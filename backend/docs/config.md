@@ -41,6 +41,7 @@ This document serves as a comprehensive guide to the configuration system in Pen
     - [Recommended Assistant Settings for Different Use Cases](#recommended-assistant-settings-for-different-use-cases)
   - [Search Engine Settings](#search-engine-settings)
     - [DuckDuckGo Search](#duckduckgo-search)
+    - [Sploitus Search](#sploitus-search)
     - [Google Search](#google-search)
     - [Traversaal Search](#traversaal-search)
     - [Tavily Search](#tavily-search)
@@ -1044,6 +1045,12 @@ These settings control the integration with various search engines used for web 
 | ----------------- | -------------------- | ------------- | ------------------------------------------ |
 | DuckDuckGoEnabled | `DUCKDUCKGO_ENABLED` | `true`        | Enable or disable DuckDuckGo Search engine |
 
+### Sploitus Search
+
+| Option          | Environment Variable | Default Value | Description                                                 |
+| --------------- | -------------------- | ------------- | ----------------------------------------------------------- |
+| SploitusEnabled | `SPLOITUS_ENABLED`   | `true`        | Enable or disable Sploitus exploit and vulnerability search |
+
 ### Google Search
 
 | Option       | Environment Variable | Default Value | Description                                              |
@@ -1117,6 +1124,16 @@ perplexitySearch: &functions.PerplexitySearchFunc{
     summarizer:  cfg.Summarizer,
 },
 
+// Sploitus Search configuration
+sploitus := NewSploitusTool(
+    fte.flowID,
+    cfg.TaskID,
+    cfg.SubtaskID,
+    fte.cfg.SploitusEnabled,
+    fte.cfg.ProxyURL,
+    fte.slp,
+)
+
 // Searxng Search configuration
 searxng := NewSearxngTool(
     fte.flowID,
@@ -1139,17 +1156,20 @@ These settings enable:
 - Configuration of search parameters like language, context size, and time range
 - Integration of search capabilities into the AI agent's toolset
 - Web information gathering with different search strategies
+- Security research through Sploitus, providing access to exploit databases and CVE information
 - Meta-search capabilities through Searxng, aggregating results from multiple search engines
 
-Having multiple search engine options ensures redundancy and provides different search algorithms for varied information needs. Searxng is particularly useful as it provides aggregated results from multiple search engines while offering enhanced privacy and customization options.
+Having multiple search engine options ensures redundancy and provides different search algorithms for varied information needs. Sploitus is specifically designed for security research, providing comprehensive exploit and vulnerability information essential for penetration testing. Searxng is particularly useful as it provides aggregated results from multiple search engines while offering enhanced privacy and customization options.
 
 ## Proxy Settings
 
 These settings control the HTTP proxy used for outbound connections, which is important for network security and access control.
 
-| Option   | Environment Variable | Default Value | Description                                              |
-| -------- | -------------------- | ------------- | -------------------------------------------------------- |
-| ProxyURL | `PROXY_URL`          | *(none)*      | URL for HTTP proxy (e.g., `http://user:pass@proxy:8080`) |
+| Option              | Environment Variable    | Default Value | Description                                                      |
+| ------------------- | ----------------------- | ------------- | ---------------------------------------------------------------- |
+| ProxyURL            | `PROXY_URL`             | *(none)*      | URL for HTTP proxy (e.g., `http://user:pass@proxy:8080`)         |
+| ExternalSSLCAPath   | `EXTERNAL_SSL_CA_PATH`  | *(none)*      | Path to trusted CA certificate for external LLM SSL connections  |
+| ExternalSSLInsecure | `EXTERNAL_SSL_INSECURE` | `false`       | Skip SSL certificate verification for external connections       |
 
 ### Usage Details
 
@@ -1185,6 +1205,27 @@ The proxy setting is essential for:
 - Implementing network-level security policies
 - Enabling access to external services from restricted networks
 - Monitoring and auditing external API usage
+
+The SSL settings provide additional security configuration:
+
+- **ExternalSSLCAPath**: Specifies a custom CA certificate for validating SSL connections to external services:
+  ```go
+  // Used in provider initialization to configure custom CA certificates
+  if cfg.ExternalSSLCAPath != "" {
+      caCert, err := os.ReadFile(cfg.ExternalSSLCAPath)
+      // Configure TLS with custom CA
+  }
+  ```
+  This is useful when connecting to LLM providers with self-signed certificates or internal CAs.
+
+- **ExternalSSLInsecure**: Allows skipping SSL certificate verification:
+  ```go
+  // Used in HTTP client configuration
+  if cfg.ExternalSSLInsecure {
+      tlsConfig.InsecureSkipVerify = true
+  }
+  ```
+  **Warning**: Only use this in development or trusted environments. Skipping certificate verification exposes connections to man-in-the-middle attacks.
 
 ## Graphiti Knowledge Graph Settings
 
