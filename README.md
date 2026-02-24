@@ -474,7 +474,7 @@ The system uses Docker containers for isolation and easy deployment, with separa
 
 ### System Requirements
 
-- Docker and Docker Compose
+- Docker and Docker Compose (or Podman - see [Podman configuration](#running-pentagi-with-podman))
 - Minimum 2 vCPU
 - Minimum 4GB RAM
 - 20GB free disk space
@@ -736,6 +736,83 @@ sudo firewall-cmd --reload
 
 > [!NOTE]
 > You'll need to accept the self-signed SSL certificate warning in your browser when accessing via IP address.
+
+---
+
+### Running PentAGI with Podman
+
+PentAGI fully supports Podman as a Docker alternative. However, when using **Podman in rootless mode**, the scraper service requires special configuration because rootless containers cannot bind privileged ports (ports below 1024).
+
+#### Podman Rootless Configuration
+
+The default scraper configuration uses port 443 (HTTPS), which is a privileged port. For Podman rootless, reconfigure the scraper to use a non-privileged port:
+
+**1. Edit `docker-compose.yml`** - modify the `scraper` service (around line 199):
+
+```yaml
+scraper:
+  image: vxcontrol/scraper:latest
+  restart: unless-stopped
+  container_name: scraper
+  hostname: scraper
+  expose:
+    - 3000/tcp  # Changed from 443 to 3000
+  ports:
+    - "${SCRAPER_LISTEN_IP:-127.0.0.1}:${SCRAPER_LISTEN_PORT:-9443}:3000"  # Map to port 3000
+  environment:
+    - MAX_CONCURRENT_SESSIONS=${LOCAL_SCRAPER_MAX_CONCURRENT_SESSIONS:-10}
+    - USERNAME=${LOCAL_SCRAPER_USERNAME:-someuser}
+    - PASSWORD=${LOCAL_SCRAPER_PASSWORD:-somepass}
+  logging:
+    options:
+      max-size: 50m
+      max-file: "7"
+  volumes:
+    - scraper-ssl:/usr/src/app/ssl
+  networks:
+    - pentagi-network
+  shm_size: 2g
+```
+
+**2. Update `.env` file** - change the scraper URL to use HTTP and port 3000:
+
+```bash
+# Scraper configuration for Podman rootless
+SCRAPER_PRIVATE_URL=http://someuser:somepass@scraper:3000/
+LOCAL_SCRAPER_USERNAME=someuser
+LOCAL_SCRAPER_PASSWORD=somepass
+```
+
+> [!IMPORTANT]
+> Key changes for Podman:
+> - Use **HTTP** instead of HTTPS for `SCRAPER_PRIVATE_URL`
+> - Use port **3000** instead of 443
+> - Change internal `expose` to `3000/tcp`
+> - Update port mapping to target `3000` instead of `443`
+
+**3. Recreate containers:**
+
+```bash
+podman-compose down
+podman-compose up -d --force-recreate
+```
+
+**4. Test scraper connectivity:**
+
+```bash
+# Test from within the pentagi container
+podman exec -it pentagi wget -O- "http://someuser:somepass@scraper:3000/html?url=http://example.com"
+```
+
+If you see HTML output, the scraper is working correctly.
+
+#### Podman Rootful Mode
+
+If you're running Podman in rootful mode (with sudo), you can use the default configuration without modifications. The scraper will work on port 443 as intended.
+
+#### Docker Compatibility
+
+All Podman configurations remain fully compatible with Docker. The non-privileged port approach works identically on both container runtimes.
 
 ### Assistant Configuration
 
