@@ -127,11 +127,11 @@ func NewRouter(
 	userService := services.NewUserService(orm, userCache)
 	roleService := services.NewRoleService(orm)
 	providerService := services.NewProviderService(providers)
-	flowService := services.NewFlowService(orm, providers, controller)
+	flowService := services.NewFlowService(orm, providers, controller, subscriptions)
 	taskService := services.NewTaskService(orm)
 	subtaskService := services.NewSubtaskService(orm)
 	containerService := services.NewContainerService(orm)
-	assistantService := services.NewAssistantService(orm, providers, controller)
+	assistantService := services.NewAssistantService(orm, providers, controller, subscriptions)
 	agentlogService := services.NewAgentlogService(orm)
 	assistantlogService := services.NewAssistantlogService(orm)
 	msglogService := services.NewMsglogService(orm)
@@ -141,7 +141,7 @@ func NewRouter(
 	screenshotService := services.NewScreenshotService(orm, cfg.DataDir)
 	promptService := services.NewPromptService(orm)
 	analyticsService := services.NewAnalyticsService(orm)
-	tokenService := services.NewTokenService(orm, cfg.CookieSigningSalt, tokenCache)
+	tokenService := services.NewTokenService(orm, cfg.CookieSigningSalt, tokenCache, subscriptions)
 	graphqlService := services.NewGraphqlService(
 		db, cfg, baseURL, cfg.CorsOrigins, tokenCache, providers, controller, subscriptions,
 	)
