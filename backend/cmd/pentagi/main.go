@@ -21,6 +21,7 @@ import (
 	obs "pentagi/pkg/observability"
 	"pentagi/pkg/providers"
 	router "pentagi/pkg/server"
+	"pentagi/pkg/version"
 
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
@@ -32,6 +33,8 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
+
+	logrus.Infof("Starting PentAGI %s", version.GetBinaryVersion())
 
 	cfg, err := config.NewConfig()
 	if err != nil {
