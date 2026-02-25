@@ -44,14 +44,11 @@ RUN npm run build -- \
 # ========================================
 FROM golang:1.24-bookworm AS api-builder
 
-<<<<<<< HEAD
-# Static binary compilation settings
-=======
-# Build arguments for version information
+# Version injection arguments
 ARG PACKAGE_VER=develop
 ARG PACKAGE_REV=
 
->>>>>>> 9a63aa7 (feat: enhance Docker build process with versioning and entrypoint script)
+# Static binary compilation settings
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
 

@@ -353,6 +353,7 @@ func (t *terminal) WriteFile(ctx context.Context, flowID int64, content string, 
 	tarBuffer := &bytes.Buffer{}
 	archiveWriter := tar.NewWriter(tarBuffer)
 	defer archiveWriter.Close()
+
 	filename := filepath.Base(path)
 	fileDescriptor := &tar.Header{
 		Name: filename,
