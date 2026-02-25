@@ -108,9 +108,9 @@ func (t *traversaal) search(ctx context.Context, query string) (string, error) {
 	}
 
 	reqBody, err := json.Marshal(struct {
-		Query []string `json:"query"`
+		Query string `json:"query"`
 	}{
-		Query: []string{query},
+		Query: query,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal request body: %v", err)
