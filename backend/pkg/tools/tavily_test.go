@@ -2,7 +2,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -30,21 +29,7 @@ func TestTavilySearchDoesNotMutateDefaultClient(t *testing.T) {
 func TestTavilySearchWithoutProxy(t *testing.T) {
 	originalTransport := http.DefaultClient.Transport
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := tavilySearchResult{
-			Answer: "test answer",
-			Query:  "test",
-			Results: []tavilyResult{
-				{Title: "Result 1", URL: "https://example.com/1", Content: "content 1", Score: 0.95},
-			},
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
-	}))
-	defer ts.Close()
-
-	// Temporarily redirect DefaultClient to test server via custom transport.
-	// This avoids any real network call when proxyURL is empty.
+	// Set a custom transport to avoid real network calls.
 	http.DefaultClient.Transport = &http.Transport{}
 	defer func() { http.DefaultClient.Transport = originalTransport }()
 
@@ -54,7 +39,7 @@ func TestTavilySearchWithoutProxy(t *testing.T) {
 		proxyURL: "", // no proxy -- uses DefaultClient as-is
 	}
 
-	// Will reach tavilyURL (not test server) but fail quickly via the transport.
+	// search() will fail to reach tavilyURL (expected).
 	// The key check: DefaultClient.Transport is not replaced by search().
 	transportBefore := http.DefaultClient.Transport
 	_, _ = tav.search(context.Background(), "test query", 5)
