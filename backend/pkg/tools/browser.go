@@ -90,7 +90,9 @@ func (b *browser) wrapCommandResult(ctx context.Context, name, result, url, scre
 		}).Error("browser tool failed")
 		return fmt.Sprintf("browser tool '%s' handled with error: %v", name, err), nil
 	}
-	_, _ = b.scp.PutScreenshot(ctx, screen, url, b.taskID, b.subtaskID)
+	if screen != "" {
+		_, _ = b.scp.PutScreenshot(ctx, screen, url, b.taskID, b.subtaskID)
+	}
 	return result, nil
 }
 
@@ -156,7 +158,8 @@ func (b *browser) ContentMD(url string) (string, string, error) {
 		return "", "", errContent
 	}
 	if errScreenshot != nil {
-		return "", "", errScreenshot
+		logrus.WithError(errScreenshot).WithField("url", url).Warn("failed to capture screenshot, continuing without it")
+		screenshotName = ""
 	}
 
 	return content, screenshotName, nil
@@ -186,7 +189,8 @@ func (b *browser) ContentHTML(url string) (string, string, error) {
 		return "", "", errContent
 	}
 	if errScreenshot != nil {
-		return "", "", errScreenshot
+		logrus.WithError(errScreenshot).WithField("url", url).Warn("failed to capture screenshot, continuing without it")
+		screenshotName = ""
 	}
 
 	return content, screenshotName, nil
@@ -216,7 +220,8 @@ func (b *browser) Links(url string) (string, string, error) {
 		return "", "", errLinks
 	}
 	if errScreenshot != nil {
-		return "", "", errScreenshot
+		logrus.WithError(errScreenshot).WithField("url", url).Warn("failed to capture screenshot, continuing without it")
+		screenshotName = ""
 	}
 
 	return links, screenshotName, nil
@@ -336,8 +341,8 @@ func (b *browser) getHTML(targetURL string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch content by url '%s': %w", targetURL, err)
 	}
-	if len(content) < minMdContentSize {
-		return "", fmt.Errorf("content size is less than minimum: %d bytes", minMdContentSize)
+	if len(content) < minHtmlContentSize {
+		return "", fmt.Errorf("content size is less than minimum: %d bytes", minHtmlContentSize)
 	}
 
 	return string(content), nil
