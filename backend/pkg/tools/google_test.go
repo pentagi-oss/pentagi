@@ -155,10 +155,12 @@ func TestGoogleNewSearchServiceWithProxy(t *testing.T) {
 		proxyURL: "http://proxy.example.com:8080",
 	}
 
-	// newSearchService should succeed even with proxy configured.
-	// Note: the current implementation has a known issue where opts containing
-	// the proxy client are built but not passed to NewService. This test
-	// documents the current behavior: service is created without proxy.
+	// newSearchService constructs opts with the proxy HTTP client, but the
+	// current implementation passes a hardcoded option.WithAPIKey(g.apiKey)
+	// to customsearch.NewService instead of opts... (see google.go:141).
+	// This test verifies the service is created without error; it does NOT
+	// verify that the proxy is actually applied to the underlying HTTP client,
+	// because that requires an integration test with real network traffic.
 	svc, err := g.newSearchService(t.Context())
 	if err != nil {
 		t.Fatalf("newSearchService() unexpected error: %v", err)

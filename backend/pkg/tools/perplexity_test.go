@@ -3,8 +3,8 @@ package tools
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -286,59 +286,57 @@ func TestPerplexityGetSummarizePrompt(t *testing.T) {
 	})
 }
 
-func TestPerplexitySearchHTTPErrors(t *testing.T) {
-	tests := []struct {
-		name       string
-		statusCode int
-		errContain string
-	}{
-		{
-			name:       "unauthorized returns API key error",
-			statusCode: http.StatusUnauthorized,
-			errContain: "API key",
-		},
-		{
-			name:       "server error returns server error",
-			statusCode: http.StatusInternalServerError,
-			errContain: "server",
-		},
+// unusedPort returns a TCP address with a port that is guaranteed to be unused.
+// It binds to port 0 (OS-assigned), captures the address, then closes the listener.
+func unusedPort(t *testing.T) string {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to find unused port: %v", err)
+	}
+	addr := ln.Addr().String()
+	ln.Close()
+	return addr
+}
+
+func TestPerplexitySearchWithInvalidKeyReturnsError(t *testing.T) {
+	// search() sends to the hardcoded perplexityURL const with a fake API key.
+	// Depending on network environment:
+	//   - Online: API returns 401 -> handleErrorResponse -> "API key is wrong"
+	//   - Offline: connection fails -> "failed to send request"
+	// Either way, an error must be returned. HTTP status-code-specific error
+	// handling is covered separately by TestPerplexityHandleErrorResponse.
+	p := &perplexity{
+		flowID:  1,
+		apiKey:  "test-key-invalid",
+		model:   "sonar",
+		timeout: 5 * time.Second,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tt.statusCode)
-			}))
-			defer ts.Close()
-
-			p := &perplexity{
-				flowID:  1,
-				apiKey:  "test-key",
-				timeout: 5 * time.Second,
-			}
-
-			// Override the perplexity URL by using the proxy to redirect to test server.
-			// Since we cannot change the const perplexityURL, we test the error handling
-			// path directly through handleErrorResponse (tested above) and verify search
-			// returns an error when the real endpoint is unreachable.
-			_, err := p.search(context.Background(), "test query")
-			if err == nil {
-				t.Fatal("search() should return error when real endpoint is unreachable")
-			}
-		})
+	_, err := p.search(context.Background(), "test query")
+	if err == nil {
+		t.Fatal("search() with invalid API key should return error")
+	}
+	// Accept either network error or API rejection.
+	errMsg := err.Error()
+	if !strings.Contains(errMsg, "failed to send request") &&
+		!strings.Contains(errMsg, "API key") &&
+		!strings.Contains(errMsg, "status code") {
+		t.Errorf("unexpected error = %q; want network or auth error", errMsg)
 	}
 }
 
 func TestPerplexitySearchCreatesNewClientWithProxy(t *testing.T) {
 	// Verify that search() with a proxy URL does not panic and returns
 	// a clean error. The proxy transport is created correctly but the
-	// hardcoded perplexityURL is unreachable through the fake proxy.
+	// hardcoded perplexityURL is unreachable through the non-existent proxy.
+	addr := unusedPort(t)
 	p := &perplexity{
 		flowID:   1,
 		apiKey:   "test-key",
 		model:    "sonar",
 		timeout:  2 * time.Second,
-		proxyURL: "http://127.0.0.1:19999", // non-existent proxy
+		proxyURL: "http://" + addr, // guaranteed unused port
 	}
 
 	_, err := p.search(context.Background(), "test query")
