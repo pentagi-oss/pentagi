@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4
+# # syntax=docker/dockerfile:1.4
 
 # ========================================
 # Stage 1: Frontend Application Build
@@ -119,7 +119,8 @@ RUN apk --no-cache add ca-certificates openssl shadow
 
 ADD scripts/entrypoint.sh /opt/pentagi/bin/
 
-RUN chmod +x /opt/pentagi/bin/entrypoint.sh
+RUN sed -i 's/\r//' /opt/pentagi/bin/entrypoint.sh && \
+    chmod +x /opt/pentagi/bin/entrypoint.sh
 
 RUN mkdir -p \
     /opt/pentagi/bin \
