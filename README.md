@@ -3340,6 +3340,7 @@ docker build -t pentagi:dev .
 This project is made possible thanks to the following research and developments:
 - [Emerging Architectures for LLM Applications](https://lilianweng.github.io/posts/2023-06-23-agent)
 - [A Survey of Autonomous LLM Agents](https://arxiv.org/abs/2403.08299)
+- [Codel](https://github.com/semanser/codel) by Andriy Semenets - initial architectural inspiration for agent-based automation
 
 ## License
 
