@@ -1,3 +1,4 @@
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -13,6 +14,8 @@ dist-ssr
 ssl
 *.local
 
+# Editor directories and files
+.DS_Store
 *.suo
 *.ntvs*
 *.njsproj

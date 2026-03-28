@@ -5,6 +5,7 @@
 # ========================================
 FROM node:23-slim AS frontend-compiler
 
+# Production build configuration
 ENV NODE_ENV=production
 ENV VITE_BUILD_MEMORY_LIMIT=4096
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -23,7 +24,7 @@ RUN apt-get update && apt-get install -y \
 # GraphQL schema for code generation
 COPY ./backend/pkg/graph/schema.graphqls ../backend/pkg/graph/
 
-# Frontend source code
+# Application source code
 COPY frontend/ .
 
 # Install dependencies with package manager detection for SBOM
@@ -52,7 +53,7 @@ ARG PACKAGE_REV=
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
 
-# Install build essentials
+# Install compilation toolchain and dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     tzdata \
@@ -64,7 +65,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app/backend
 
-# Application source code
 COPY backend/ .
 
 # Fetch Go module dependencies (cached for faster rebuilds)
@@ -108,7 +108,7 @@ RUN go build -trimpath \
 # ========================================
 FROM alpine:3.23.3
 
-# Create non-root user and docker group with specific GID
+# Establish non-privileged execution context with docker socket access
 RUN addgroup -g 998 docker && \
     addgroup -S pentagi && \
     adduser -S pentagi -G pentagi && \

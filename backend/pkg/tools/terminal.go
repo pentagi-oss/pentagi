@@ -25,10 +25,11 @@ const (
 	defaultExtraExecTimeout   = 5 * time.Second
 	defaultQuickCheckTimeout  = 500 * time.Millisecond
 
-	ansiColorInputCmd  = "\033[96m"
-	ansiColorSystemMsg = "\033[92m"
-	ansiColorReset     = "\033[0m"
-	ansiLineTerminator = "\r\n"
+	// ANSI terminal color codes (aligned with PentAGI UI palette)
+	ansiColorInputCmd    = "\033[96m" // Bright Cyan - matches UI blue accents
+	ansiColorSystemMsg   = "\033[92m" // Bright Green - universal success/info
+	ansiColorReset       = "\033[0m"  // Reset to default
+	ansiLineTerminator   = "\r\n"     // CRLF for terminal compatibility
 )
 
 type execResult struct {
@@ -150,19 +151,20 @@ func (t *terminal) ExecCommand(
 		command,
 	}
 
-	// check if container is running
+	// verify container runtime status
 	isRunning, err := t.dockerClient.VerifyContainerRuntime(ctx, t.containerLID)
 	if err != nil {
-		return "", fmt.Errorf("failed to inspect container: %w", err)
+		return "", fmt.Errorf("runtime verification failed: %w", err)
 	}
 	if !isRunning {
-		return "", fmt.Errorf("container is not running")
+		return "", fmt.Errorf("container runtime is not operational")
 	}
 
 	if cwd == "" {
 		cwd = docker.WorkFolderPathInContainer
 	}
 
+	// Format command with working directory and ANSI styling
 	styledCommand := fmt.Sprintf("%s $ %s%s%s%s", cwd, ansiColorInputCmd, command, ansiColorReset, ansiLineTerminator)
 	_, err = t.tlp.PutMsg(ctx, database.TermlogTypeStdin, styledCommand, t.containerID, t.taskID, t.subtaskID)
 	if err != nil {
@@ -254,6 +256,7 @@ func (t *terminal) getExecResult(ctx context.Context, id string, timeout time.Du
 	}
 
 	results := dst.String()
+	// Style system output with color coding
 	styledOutput := fmt.Sprintf("%s%s%s%s", ansiColorSystemMsg, results, ansiColorReset, ansiLineTerminator)
 	_, err = t.tlp.PutMsg(ctx, database.TermlogTypeStdout, styledOutput, t.containerID, t.taskID, t.subtaskID)
 	if err != nil {
@@ -272,15 +275,16 @@ func (t *terminal) ReadFile(ctx context.Context, flowID int64, path string) (str
 
 	isRunning, err := t.dockerClient.VerifyContainerRuntime(ctx, t.containerLID)
 	if err != nil {
-		return "", fmt.Errorf("failed to inspect container: %w", err)
+		return "", fmt.Errorf("runtime verification failed: %w", err)
 	}
 	if !isRunning {
-		return "", fmt.Errorf("container is not running")
+		return "", fmt.Errorf("container runtime is not operational")
 	}
 
 	cwd := docker.WorkFolderPathInContainer
 	escapedPath := strings.ReplaceAll(path, "'", "'\"'\"'")
 	catCommand := fmt.Sprintf("cat '%s'", escapedPath)
+	// Format read file command with styling
 	styledCommand := fmt.Sprintf("%s $ %s%s%s%s", cwd, ansiColorInputCmd, catCommand, ansiColorReset, ansiLineTerminator)
 	_, err = t.tlp.PutMsg(ctx, database.TermlogTypeStdin, styledCommand, t.containerID, t.taskID, t.subtaskID)
 	if err != nil {
@@ -338,6 +342,7 @@ func (t *terminal) ReadFile(ctx context.Context, flowID int64, path string) (str
 	}
 
 	content := buffer.String()
+	// Style file content output
 	styledContent := fmt.Sprintf("%s%s%s%s", ansiColorSystemMsg, content, ansiColorReset, ansiLineTerminator)
 	_, err = t.tlp.PutMsg(ctx, database.TermlogTypeStdout, styledContent, t.containerID, t.taskID, t.subtaskID)
 	if err != nil {
@@ -352,12 +357,13 @@ func (t *terminal) WriteFile(ctx context.Context, flowID int64, content string, 
 
 	isRunning, err := t.dockerClient.VerifyContainerRuntime(ctx, t.containerLID)
 	if err != nil {
-		return "", fmt.Errorf("failed to inspect container: %w", err)
+		return "", fmt.Errorf("container runtime check failed: %w", err)
 	}
 	if !isRunning {
-		return "", fmt.Errorf("container is not running")
+		return "", fmt.Errorf("target container is not operational")
 	}
 
+        // Docker SDK requires TAR format for file transfer
 	tarBuffer := &bytes.Buffer{}
 	archiveWriter := tar.NewWriter(tarBuffer)
 	defer archiveWriter.Close()
@@ -391,6 +397,7 @@ func (t *terminal) WriteFile(ctx context.Context, flowID int64, content string, 
 		return "", fmt.Errorf("container file transfer failed: %w", err)
 	}
 
+	// Format success message with styling
 	successMsg := fmt.Sprintf("File successfully saved to %s", path)
 	styledMsg := fmt.Sprintf("%s%s%s%s", ansiColorSystemMsg, successMsg, ansiColorReset, ansiLineTerminator)
 	_, err = t.tlp.PutMsg(ctx, database.TermlogTypeStdin, styledMsg, t.containerID, t.taskID, t.subtaskID)

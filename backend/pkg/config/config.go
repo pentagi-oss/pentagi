@@ -26,7 +26,7 @@ type Config struct {
 	InstallationID string `env:"INSTALLATION_ID"`
 	LicenseKey     string `env:"LICENSE_KEY"`
 
-	// === Docker Runtime Configuration ===
+	// === Container Runtime Configuration ===
 	DockerInside                 bool   `env:"DOCKER_INSIDE" envDefault:"false"`
 	DockerNetAdmin               bool   `env:"DOCKER_NET_ADMIN" envDefault:"false"`
 	DockerSocket                 string `env:"DOCKER_SOCKET"`
@@ -36,22 +36,22 @@ type Config struct {
 	DockerDefaultImage           string `env:"DOCKER_DEFAULT_IMAGE" envDefault:"debian:latest"`
 	DockerDefaultImageForPentest string `env:"DOCKER_DEFAULT_IMAGE_FOR_PENTEST" envDefault:"vxcontrol/kali-linux"`
 
-	// === HTTP and GraphQL Server Configuration ===
+	// === API Server Configuration ===
 	ServerPort   int    `env:"SERVER_PORT" envDefault:"8080"`
 	ServerHost   string `env:"SERVER_HOST" envDefault:"0.0.0.0"`
 	ServerUseSSL bool   `env:"SERVER_USE_SSL" envDefault:"false"`
 	ServerSSLKey string `env:"SERVER_SSL_KEY"`
 	ServerSSLCrt string `env:"SERVER_SSL_CRT"`
 
-	// === Frontend Static Assets Configuration ===
+	// === Frontend Static Assets ===
 	StaticURL   *url.URL `env:"STATIC_URL"`
 	StaticDir   string   `env:"STATIC_DIR" envDefault:"./fe"`
 	CorsOrigins []string `env:"CORS_ORIGINS" envDefault:"*"`
 
-	// === Session Security Configuration ===
+	// === Authentication & Session Security ===
 	CookieSigningSalt string `env:"COOKIE_SIGNING_SALT"`
 
-	// === Browser Automation Service Configuration ===
+	// === Web Scraper Service Endpoints ===
 	ScraperPublicURL  string `env:"SCRAPER_PUBLIC_URL"`
 	ScraperPrivateURL string `env:"SCRAPER_PRIVATE_URL"`
 
@@ -81,7 +81,7 @@ type Config struct {
 	SummarizerMaxQABytes     int  `env:"SUMMARIZER_MAX_QA_BYTES" envDefault:"65536"`
 	SummarizerKeepQASections int  `env:"SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"1"`
 
-	// === LLM Provider: Custom/Generic ===
+	// === LLM Provider: Custom/Self-Hosted ===
 	LLMServerURL               string `env:"LLM_SERVER_URL"`
 	LLMServerKey               string `env:"LLM_SERVER_KEY"`
 	LLMServerModel             string `env:"LLM_SERVER_MODEL"`
@@ -99,7 +99,7 @@ type Config struct {
 	OllamaServerPullModelsEnabled bool   `env:"OLLAMA_SERVER_PULL_MODELS_ENABLED" envDefault:"false"`
 	OllamaServerLoadModelsEnabled bool   `env:"OLLAMA_SERVER_LOAD_MODELS_ENABLED" envDefault:"false"`
 
-	// === Search Engine: Google Custom Search ===
+	// === LLM Provider: Google Gemini ===
 	GeminiAPIKey    string `env:"GEMINI_API_KEY"`
 	GeminiServerURL string `env:"GEMINI_SERVER_URL" envDefault:"https://generativelanguage.googleapis.com"`
 
@@ -155,13 +155,13 @@ type Config struct {
 	OAuthGithubClientID     string `env:"OAUTH_GITHUB_CLIENT_ID"`
 	OAuthGithubClientSecret string `env:"OAUTH_GITHUB_CLIENT_SECRET"`
 
-	// === Authentication Callback Configuration ===
+	// === OAuth Callback Configuration ===
 	PublicURL string `env:"PUBLIC_URL" envDefault:""`
 
-	// === Search Engine: Traversaal ===
+	// === Search Engine: Traversaal AI ===
 	TraversaalAPIKey string `env:"TRAVERSAAL_API_KEY"`
 
-	// === Search Engine: Tavily ===
+	// === Search Engine: Tavily AI ===
 	TavilyAPIKey string `env:"TAVILY_API_KEY"`
 
 	// === Search Engine: Perplexity AI ===
@@ -186,7 +186,7 @@ type Config struct {
 	AssistantSummarizerMaxQABytes     int  `env:"ASSISTANT_SUMMARIZER_MAX_QA_BYTES" envDefault:"76800"`
 	AssistantSummarizerKeepQASections int  `env:"ASSISTANT_SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"3"`
 
-	// === Network Proxy Configuration ===
+	// === Network Proxy Settings ===
 	ProxyURL string `env:"PROXY_URL"`
 
 	// SSL Trusted CA Certificate Path (for external communication with LLM backends)
@@ -197,30 +197,30 @@ type Config struct {
 	// A value of 0 means no timeout (not recommended).
 	HTTPClientTimeout int `env:"HTTP_CLIENT_TIMEOUT" envDefault:"600"`
 
-	// === OpenTelemetry Configuration ===
+	// === Observability: OpenTelemetry Collector ===
 	TelemetryEndpoint string `env:"OTEL_HOST"`
 
-	// === Langfuse Observability Configuration ===
+	// === Observability: Langfuse LLM Analytics ===
 	LangfuseBaseURL   string `env:"LANGFUSE_BASE_URL"`
 	LangfuseProjectID string `env:"LANGFUSE_PROJECT_ID"`
 	LangfusePublicKey string `env:"LANGFUSE_PUBLIC_KEY"`
 	LangfuseSecretKey string `env:"LANGFUSE_SECRET_KEY"`
 
-	// Graphiti knowledge graph
+	// === Knowledge Graph: Graphiti + Neo4j ===
 	GraphitiEnabled bool   `env:"GRAPHITI_ENABLED" envDefault:"false"`
 	GraphitiTimeout int    `env:"GRAPHITI_TIMEOUT" envDefault:"30"`
 	GraphitiURL     string `env:"GRAPHITI_URL"`
 
-	// Execution Monitor Detector settings
+	// === Agent Execution Monitoring ===
 	ExecutionMonitorEnabled        bool `env:"EXECUTION_MONITOR_ENABLED" envDefault:"false"`
 	ExecutionMonitorSameToolLimit  int  `env:"EXECUTION_MONITOR_SAME_TOOL_LIMIT" envDefault:"5"`
 	ExecutionMonitorTotalToolLimit int  `env:"EXECUTION_MONITOR_TOTAL_TOOL_LIMIT" envDefault:"10"`
 
-	// Agent execution tool calls limit
+	// === Agent Tool Execution Limits ===
 	MaxGeneralAgentToolCalls int `env:"MAX_GENERAL_AGENT_TOOL_CALLS" envDefault:"100"`
 	MaxLimitedAgentToolCalls int `env:"MAX_LIMITED_AGENT_TOOL_CALLS" envDefault:"20"`
 
-	// Agent planning step for pentester, coder, installer
+	// === Agent Planning Phase Configuration ===
 	AgentPlanningStepEnabled bool `env:"AGENT_PLANNING_STEP_ENABLED" envDefault:"false"`
 }
 

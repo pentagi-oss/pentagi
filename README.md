@@ -2459,7 +2459,7 @@ Run the command(s) in `frontend` folder:
 - Run `npm run dev` to run the web app
 - Run `npm run build` to build the web app
 
-Navigate to the displayed development server address in your web browser.
+Open your browser and visit the web app URL.
 
 ## Testing LLM Agents
 

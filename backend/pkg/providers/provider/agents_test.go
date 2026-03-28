@@ -206,7 +206,7 @@ func TestDetermineCommonCharset(t *testing.T) {
 				{'a', 'b', 'c'},
 				{'x', 'y', 'z'},
 			},
-			expected: "h",
+			expected: "l", // x, y, z are not hex (> 'f'), so it's lowercase, not hex
 		},
 	}
 

@@ -363,7 +363,7 @@ func (dc *dockerClient) HaltContainer(ctx context.Context, containerID string, d
 	stopErr := dc.client.ContainerStop(ctx, containerID, container.StopOptions{})
 	if stopErr != nil {
 		if client.IsErrNotFound(stopErr) {
-			logger.Warn("container not found")
+			logger.Warn("target container already removed or never existed")
 		} else {
 			return fmt.Errorf("container shutdown failed: %w", stopErr)
 		}
@@ -384,10 +384,10 @@ func (dc *dockerClient) HaltContainer(ctx context.Context, containerID string, d
 
 func (dc *dockerClient) PurgeContainer(ctx context.Context, containerID string, dbID int64) error {
 	logger := dc.logger.WithContext(ctx).WithField("local_id", containerID)
-	logger.Info("purging container")
+	logger.Info("purging container and associated resources")
 
 	if err := dc.HaltContainer(ctx, containerID, dbID); err != nil {
-		return fmt.Errorf("failed to halt container: %w", err)
+		return fmt.Errorf("failed to halt container before purge: %w", err)
 	}
 
 	options := container.RemoveOptions{
@@ -398,6 +398,7 @@ func (dc *dockerClient) PurgeContainer(ctx context.Context, containerID string, 
 		if !client.IsErrNotFound(err) {
 			return fmt.Errorf("failed to remove container: %w", err)
 		}
+		// TODO: fix this case
 		logger.WithError(err).Warn("container not found")
 	}
 
@@ -511,11 +512,13 @@ func (dc *dockerClient) VerifyContainerRuntime(ctx context.Context, containerID 
 		return false, fmt.Errorf("container inspection failed: %w", err)
 	}
 
-	if inspection.State.Health != nil && inspection.State.Health.Status == "unhealthy" {
-		return false, nil
+	// Check both Running state and health status if available
+	isOperational := inspection.State.Running
+	if inspection.State != nil && inspection.State.Health != nil && inspection.State.Health.Status != "" {
+		isOperational = isOperational && inspection.State.Health.Status != "unhealthy"
 	}
 
-	return inspection.State.Running, nil
+	return isOperational, nil
 }
 
 func (dc *dockerClient) GetDefaultImage() string {
@@ -585,8 +588,8 @@ func (dc *dockerClient) pullImage(ctx context.Context, imageName string) error {
 	}
 	defer pullStream.Close()
 
-	_, err = io.Copy(io.Discard, pullStream)
-	if err != nil {
+	// drain pull stream to completion
+	if _, err := io.Copy(io.Discard, pullStream); err != nil {
 		return fmt.Errorf("image download stream processing failed: %w", err)
 	}
 

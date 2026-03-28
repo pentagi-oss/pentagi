@@ -14,8 +14,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func StringToNullString(s string) sql.NullString {
-	return sql.NullString{String: s, Valid: s != ""}
+func NullStringToPtrString(s sql.NullString) *string {
+	if s.Valid {
+		return &s.String
+	}
+	return nil
 }
 
 func PtrStringToNullString(s *string) sql.NullString {
@@ -25,11 +28,8 @@ func PtrStringToNullString(s *string) sql.NullString {
 	return sql.NullString{String: *s, Valid: true}
 }
 
-func NullStringToPtrString(s sql.NullString) *string {
-	if s.Valid {
-		return &s.String
-	}
-	return nil
+func StringToNullString(s string) sql.NullString {
+	return sql.NullString{String: s, Valid: s != ""}
 }
 
 func Int64ToNullInt64(i *int64) sql.NullInt64 {

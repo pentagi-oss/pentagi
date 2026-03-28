@@ -1,8 +1,8 @@
 //go:build generate
 // +build generate
 
-// This file maintains development dependencies required for code generation.
-// It ensures that gqlgen and related tools remain in go.mod.
+// Package graph code generation dependencies
+// This file ensures dev tools remain in go.mod for code generation workflows
 package graph
 
 import (

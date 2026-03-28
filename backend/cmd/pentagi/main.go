@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -30,9 +31,14 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
-	defer cancel()
+	// Setup graceful shutdown context with signal handling
+	ctx, cancelOnSignal := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+	defer cancelOnSignal()
 
 	logrus.Infof("Starting PentAGI %s", version.GetBinaryVersion())
 
@@ -115,30 +121,33 @@ func main() {
 
 	r := router.NewRouter(queries, orm, cfg, providers, controller, subscriptions)
 
+	// Launch HTTP/HTTPS server in background goroutine
 	serverErrChan := make(chan error, 1)
 	go func() {
 		listen := net.JoinHostPort(cfg.ServerHost, strconv.Itoa(cfg.ServerPort))
-		log.Printf("API server listening on %s", listen)
-
+		logrus.Infof("API server listening on %s", listen)
+		
+		var startErr error
 		if cfg.ServerUseSSL && cfg.ServerSSLCrt != "" && cfg.ServerSSLKey != "" {
-			log.Println("Starting server with TLS enabled")
-			err = r.RunTLS(listen, cfg.ServerSSLCrt, cfg.ServerSSLKey)
+			logrus.Info("Starting server with TLS enabled")
+			startErr = r.RunTLS(listen, cfg.ServerSSLCrt, cfg.ServerSSLKey)
 		} else {
-			log.Println("Starting server without TLS (HTTP only)")
-			err = r.Run(listen)
+			logrus.Info("Starting server without TLS (HTTP only)")
+			startErr = r.Run(listen)
 		}
-
-		if err != nil {
-			serverErrChan <- err
+		
+		if startErr != nil {
+			serverErrChan <- fmt.Errorf("API server startup failed: %w", startErr)
 		}
 	}()
 
+	// Block until shutdown signal received or server error occurs
 	select {
 	case <-ctx.Done():
-		log.Println("Shutdown signal received, cleaning up resources...")
+		logrus.Warn("Shutdown signal received, cleaning up resources...")
 	case err := <-serverErrChan:
-		log.Fatalf("API server startup failed: %v", err)
+		logrus.Fatalf("Server terminated unexpectedly: %v", err)
 	}
 
-	log.Println("Application shutdown completed successfully")
+	logrus.Info("Application shutdown completed successfully")
 }
